@@ -1,0 +1,295 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+    >express-partials (v0.3.0)</a>
+</h1>
+<h4>Express 3.x Layout & Partial support.</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.express-partials">module express-partials</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.express-partials.express-partials">
+            function <span class="apidocSignatureSpan"></span>express-partials
+            <span class="apidocSignatureSpan">()</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.express-partials.lookup">
+            function <span class="apidocSignatureSpan">express-partials.</span>lookup
+            <span class="apidocSignatureSpan">(root, view, ext)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.express-partials.register">
+            function <span class="apidocSignatureSpan">express-partials.</span>register
+            <span class="apidocSignatureSpan">(ext, render)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.express-partials.renderer">
+            function <span class="apidocSignatureSpan">express-partials.</span>renderer
+            <span class="apidocSignatureSpan">(ext)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.express-partials" id="apidoc.module.express-partials">module express-partials</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.express-partials.express-partials" id="apidoc.element.express-partials.express-partials">
+        function <span class="apidocSignatureSpan"></span>express-partials
+        <span class="apidocSignatureSpan">()</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">express-partials = function (){
+  return function(req,res,next){
+    // res.partial(view,options) -&#x3e; res.render() (ignores any layouts)
+    res.partial = res.render;
+
+    // in template partial(view,options)
+    res.locals.partial = partial.bind(res);
+
+    // layout support
+    var _render = res.render.bind(res);
+    res.render = function(name, options, fn){
+      var layout = options &#x26;&#x26; options.layout;
+
+      // default layout
+      if( layout === true || layout === undefined ) {
+        // Try to find default layout in view options, if not found, seek for &#x27;layout&#x27;
+        var viewOptions = res.app.get(&#x27;view options&#x27;);
+        layout = viewOptions &#x26;&#x26; viewOptions.defaultLayout || &#x27;layout&#x27;;
+      }
+
+      // layout
+      if( layout ){
+        // first render normally
+        _render(name, options, function(err, body){
+          if( err )
+            return fn ? fn(err) : req.next(err);
+
+          options = options || {};
+          options.body = body;
+
+          // calculate the layout vars
+          var ext = extname(name) || &#x27;.&#x27;+(res.app.get(&#x27;view engine&#x27;) || &#x27;ejs&#x27;);
+          var root = req.app.get(&#x27;views&#x27;) || process.cwd() + &#x27;/views&#x27;;
+          var dir = dirname(layout) == &#x27;.&#x27; ? root : resolve(root,dirname(layout));
+          var filename = dir+(path.sep||&#x27;/&#x27;)+basename(layout,ext)+ext;
+
+          // See if we even have a layout to use
+          // If so, render it. If not, then fallback to just the original template
+          if (exists(filename)) {
+            layout = dirname(lookup(dir, layout, ext))+(path.sep||&#x27;/&#x27;)+basename(layout,ext)+ext;
+            _render(layout, options, fn);
+          } else {
+            // layout may be in the same folder than the view
+            dir = dirname(name) == &#x27;.&#x27; ? root : resolve(root,dirname(name));
+            filename = dir+(path.sep||&#x27;/&#x27;)+basename(layout,ext)+ext;
+
+            if(exists(filename)) {
+              layout = dirname(lookup(dir, layout, ext))+(path.sep||&#x27;/&#x27;)+basename(layout,ext)+ext;
+              _render(layout, options, fn);
+            } else {
+              _render(name, options, fn);
+            }
+          }
+        })
+
+      // no layout
+      } else {
+        _render(name, options, fn);
+      }
+    }
+
+    // done
+    next();
+  }
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.express-partials.lookup" id="apidoc.element.express-partials.lookup">
+        function <span class="apidocSignatureSpan">express-partials.</span>lookup
+        <span class="apidocSignatureSpan">(root, view, ext)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function lookup(root, view, ext){
+  var name = resolveObjectName(view);
+  var original = view;
+
+  // Try root ex: &#x3c;root&#x3e;/user.jade
+  view = resolve(root, basename(original,ext)+ext);
+  if( exists(view) ) return view;
+
+  // Try subdir ex: &#x3c;root&#x3e;/subdir/user.jade
+  view = resolve(root, dirname(original), basename(original,ext)+ext);
+  if( exists(view) ) return view;
+
+  // Try _ prefix ex: ./views/_&#x3c;name&#x3e;.jade
+  // taking precedence over the direct path
+  view = resolve(root,&#x27;_&#x27;+name+ext)
+  if( exists(view) ) return view;
+
+  // Try index ex: ./views/user/index.jade
+  view = resolve(root,name,&#x27;index&#x27;+ext);
+  if( exists(view) ) return view;
+
+  // Try ../&#x3c;name&#x3e;/index ex: ../user/index.jade
+  // when calling partial(&#x27;user&#x27;) within the same dir
+  view = resolve(root,&#x27;..&#x27;,name,&#x27;index&#x27;+ext);
+  if( exists(view) ) return view;
+
+  // Try root ex: &#x3c;root&#x3e;/user.jade
+  view = resolve(root,name+ext);
+  if( exists(view) ) return view;
+
+  return null;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.express-partials.register" id="apidoc.element.express-partials.register">
+        function <span class="apidocSignatureSpan">express-partials.</span>register
+        <span class="apidocSignatureSpan">(ext, render)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function register(ext, render){
+  if(ext[0] != &#x27;.&#x27;) {
+    ext = &#x27;.&#x27; + ext;
+  }
+  if(typeof render == &#x27;string&#x27;) {
+    render = require(render);
+  }
+  if(typeof render.render != &#x27;undefined&#x27;) {
+    register[ext] = render.render;
+  } else {
+    register[ext] = render;
+  }
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+})
+```
+
+By default express-partials tries to figure the engine out by using the extension of the template. But in special cases an extension
+ can be registered. And this can be done in a few ways:
+
+```javascript
+// a function
+partials.<span class="apidocCodeKeywordSpan">register</span>(&#x27;.j&#x27;,require(&#x27;jade&#x27;).render);
+
+// module (or object with a .render() function)
+partials.register(&#x27;.j&#x27;,require(&#x27;jade&#x27;));
+
+// string (= require(str))
+partials.register(&#x27;.j&#x27;,&#x27;jade&#x27;);
+```
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.express-partials.renderer" id="apidoc.element.express-partials.renderer">
+        function <span class="apidocSignatureSpan">express-partials.</span>renderer
+        <span class="apidocSignatureSpan">(ext)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function renderer(ext){
+  if(ext[0] !== &#x27;.&#x27;){
+    ext = &#x27;.&#x27; + ext;
+  }
+  return register[ext] != null
+    ? register[ext]
+    : register[ext] = require(ext.slice(1)).render;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
